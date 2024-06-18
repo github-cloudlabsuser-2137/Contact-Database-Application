@@ -1,4 +1,5 @@
 using CRUD_application_2.Models;
+using System;
 using System.Linq;
 using System.Web.Mvc;
  
@@ -44,6 +45,17 @@ namespace CRUD_application_2.Controllers
         {
             try
             {
+                // Check if a user with the same name or email already exists
+                if (userlist.Any(u => u.Name.Equals(user.Name, StringComparison.OrdinalIgnoreCase)
+                                      || u.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase)))
+                {
+                    ModelState.AddModelError("", "A user with the same name or email already exists.");
+                    return View("Create", user);
+                }
+
+                // Check if the userlist is empty. If so, start IDs at 1; otherwise, increment the highest ID by 1.
+                user.Id = userlist.Any() ? userlist.Max(u => u.Id) + 1 : 1;
+
                 // Add the user to the user list
                 userlist.Add(user);
 
@@ -76,16 +88,10 @@ namespace CRUD_application_2.Controllers
             return View("Edit", user);
         }
  
-        // POST: User/Edit/5
+      // POST: User/Edit/5
         [HttpPost]
         public ActionResult Edit(int id, User user)
         {
-            // This method is responsible for handling the HTTP POST request to update an existing user with the specified ID.
-            // It receives user input from the form submission and updates the corresponding user's information in the userlist.
-            // If successful, it redirects to the Index action to display the updated list of users.
-            // If no user is found with the provided ID, it returns a HttpNotFoundResult.
-            // If an error occurs during the process, it returns the Edit view to display any validation errors.
-
             var userToUpdate = userlist.FirstOrDefault(u => u.Id == id);
 
             if (userToUpdate == null)
@@ -95,6 +101,15 @@ namespace CRUD_application_2.Controllers
 
             try
             {
+                // Check if another user with the same name or email already exists
+                if (userlist.Any(u => (u.Name.Equals(user.Name, StringComparison.OrdinalIgnoreCase)
+                                       || u.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase))
+                                       && u.Id != id))
+                {
+                    ModelState.AddModelError("", "Another user with the same name or email already exists.");
+                    return View("Edit", user);
+                }
+
                 // Update the user's information
                 userToUpdate.Name = user.Name;
                 userToUpdate.Email = user.Email;
